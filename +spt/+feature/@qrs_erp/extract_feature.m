@@ -49,6 +49,20 @@ init = init(idx);
 off = -floor(obj.Offset*sr);
 dur = floor(obj.Duration*sr);
 
+if misc.ispset(data)
+    qrs = select(physioset.event.class_selector('Class','qrs'), get_event(data));
+    if ~isempty(qrs)
+        if verbose,
+            fprintf([verboseLabel ...
+                'Use QRS event information from data ...']);
+        end
+        peakLocs = get_sample(qrs);
+        featVal = compute_feat_val(tSeries, init, winDur, sr, ...
+            obj.EpochAggregationStat, obj.CorrAggregationStat, off, dur, verbose, peakLocs);
+        return;
+    end
+end
+
 [featVal, allPeakLocs] = compute_feat_val(tSeries, init, winDur, sr, ...
     obj.EpochAggregationStat, obj.CorrAggregationStat, off, dur, verbose);
 
@@ -98,6 +112,9 @@ for j = 1:size(tSeries,1)
         winData = tSeries(j, init(i):min(init(i)+winDur, size(tSeries,2)));
         if isempty(providedPeakLocs),
             evalc('peakLocs = my_fmrib_qrsdetect(winData, sr, false)');
+        elseif isnumeric(providedPeakLocs)
+            peakLocs = providedPeakLocs(providedPeakLocs > init(i) & providedPeakLocs < init(i)+winDur);
+            peakLocs = peakLocs - init(i) + 1;
         else
             peakLocs = providedPeakLocs{i};
         end

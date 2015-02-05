@@ -94,9 +94,9 @@ classdef config < meegpipe.node.abstract_config
                     'RetainedVar', 99.99, 'MaxCard', 50);
                 return;
             end
-            if ~isa(value, 'spt.pca'),
+            if ~isa(value, 'spt.spt'),
                 throw(InvalidPropValue('PCA', ...
-                    'Must be a spt.pca object'));
+                    'Must be a spt.spt object'));
             end
             obj.PCA = value;
         end
