@@ -61,6 +61,7 @@ for topoItr = 1:size(data, 2)
     
     % Plot the topography
     hF = plot(clone(config.Plotter), sensors, thisTopo);
+    colorbar(hF);
     
     % Set up figure captions
     captions{topoItr} = dataName{topoItr};

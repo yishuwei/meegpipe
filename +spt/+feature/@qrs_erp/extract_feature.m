@@ -53,8 +53,7 @@ if misc.ispset(data)
     qrs = select(physioset.event.class_selector('Class','qrs'), get_event(data));
     if ~isempty(qrs)
         if verbose,
-            fprintf([verboseLabel ...
-                'Use QRS event information from data ...']);
+            fprintf('(Use QRS event information from data) ');
         end
         peakLocs = get_sample(qrs);
         featVal = compute_feat_val(tSeries, init, winDur, sr, ...
