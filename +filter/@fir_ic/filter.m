@@ -1,4 +1,4 @@
-function [y, z] = filter(obj, x, zi, varargin)
+function [x, z] = filter(obj, x, zi, varargin)
 
 import misc.eta;
 
@@ -23,12 +23,16 @@ if 5*delay > size(x, 2),
 end
 
 
-if isempty(zi) || isnan(zi)
-    thisX = [fliplr(x(:, 1:(2*delay))) x];
+if isempty(zi)
+    if verbose
+        fprintf(' no initial condition privided (reduce border artifact by mirror) ');
+    end
+
+    thisX = [fliplr(x(:, 1:(2*delay))) x(:,:)];
     [y, z] = filter(obj.B, obj.A, thisX');
     y = y((2*delay+1):end, :);
 else
-    [y, z] = filter(obj.B, obj.A, x', zi);
+    [y, z] = filter(obj.B, obj.A, x(:,:)', zi);
 end
 
 if verbose
@@ -37,6 +41,6 @@ if verbose
     clear +misc/eta;
 end
 
-y=y';
+x(:,:)=y';
 
 end

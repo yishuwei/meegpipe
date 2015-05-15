@@ -1,11 +1,8 @@
-classdef filter < meegpipe.node.abstract_node
+classdef optimized_filter < meegpipe.node.filter.filter
     % FILTER - Apply digital filter to node input
-    
-    methods (Static, Access = protected)
-        
-        gal = generate_filt_plot(rep, idx, data1, data2, samplTime, gal, showDiff);
-        
-    end
+    % Filter data in 300,000-sample chunks by default
+    % Chunks are filtered in memory (no copy of pset)
+    % Use fir_ic to reduce border artefacts
     
     % meegpipe.node.node interface
     methods
@@ -14,12 +11,12 @@ classdef filter < meegpipe.node.abstract_node
     
     % Constructor
     methods
-        function obj = filter(varargin)
+        function obj = optimized_filter(varargin)
             import misc.prepend_varargin;
             
             dataSel = pset.selector.good_data;
             varargin = prepend_varargin(varargin, 'DataSelector', dataSel);       
-            obj = obj@meegpipe.node.abstract_node(varargin{:});
+            obj = obj@meegpipe.node.filter.filter(varargin{:});
             
             if nargin > 0 && ~ischar(varargin{1}),
                 % copy construction: keep everything like it is
