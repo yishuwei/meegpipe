@@ -5,6 +5,11 @@ classdef optimized_filter < meegpipe.node.filter.filter
     % Use fir_ic to reduce border artefacts
     
     % meegpipe.node.node interface
+    
+    properties
+        MaxChunkSamples;
+    end
+    
     methods
         [data, dataNew] = process(obj, data, varargin)
     end
@@ -13,6 +18,12 @@ classdef optimized_filter < meegpipe.node.filter.filter
     methods
         function obj = optimized_filter(varargin)
             import misc.prepend_varargin;
+            import misc.split_arguments;
+            import misc.process_arguments;
+            
+            opt.MaxChunkSamples = 300000;
+            [thisArgs, varargin] = split_arguments(fieldnames(opt), varargin);
+            [~, opt] = process_arguments(opt, thisArgs);
             
             dataSel = pset.selector.good_data;
             varargin = prepend_varargin(varargin, 'DataSelector', dataSel);       
@@ -22,6 +33,8 @@ classdef optimized_filter < meegpipe.node.filter.filter
                 % copy construction: keep everything like it is
                 return;
             end
+            
+            obj.MaxChunkSamples = opt.MaxChunkSamples;
             
             if isempty(get_name(obj)),
                 filtObj = get_config(obj, 'Filter');

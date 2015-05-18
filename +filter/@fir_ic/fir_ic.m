@@ -11,8 +11,8 @@ classdef fir_ic < ...
     % conditions.
     %
     %
-    % ## CAUTION: DOES NOT CORRECT FOR DELAY! TAKE CARE FOR DELAY MANUALLY
-    %
+    % ## CAUTION: DOES NOT CORRECT FOR DELAY! MUST TAKE CARE FOR DELAY IN
+    % ## HIGHER LEVEL DESIGN (SEE meegpipe.node.filter.optimized_filer)
     %
     % ## CONSTRUCTION
     %
@@ -26,7 +26,7 @@ classdef fir_ic < ...
     
     methods
         % filter.dfilt interface
-        [y, z] = filter(obj, x, zi, varargin);
+        [y, z] = filter(obj, x, varargin);
         
         function [y, z] = filtfilt(obj, x, varargin)
             if nargin < 3

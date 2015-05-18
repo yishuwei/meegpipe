@@ -11,11 +11,10 @@ verbose         = is_verbose(obj);
 verboseLabel    = get_verbose_label(obj);
 
 %% Configuration options
-chopSel         = get_config(obj, 'ChopSelector');
 filtObj         = get_config(obj, 'Filter');
 retRes          = get_config(obj, 'ReturnResiduals');
 nbChannelsRep   = get_config(obj, 'NbChannelsReport');
-epochDurRep     = get_config(obj, 'EpochDurReport');
+% epochDurRep     = get_config(obj, 'EpochDurReport');
 showDiffRep     = get_config(obj, 'ShowDiffReport');
 pca             = get_config(obj, 'PCA');
 
@@ -31,6 +30,12 @@ if isa(filtObj, 'function_handle'),
     end
 end
 
+if isa(filtObj,'filter.ba') && numel(filtObj.A)==1
+    filtObj = filter.fir_ic(filtObj.B);
+elseif isprop(filtObj,'BAFilter') && numel(filtObj.BAFilter.A)==1
+    filtObj = filter.fir_ic(filtObj.BAFilter.B);
+end
+
 if isa(filtObj,'filter.fir_ic')
     delay = get_filter_delay(filtObj);
     z = [];
@@ -38,21 +43,9 @@ end
 
 
 %% Find chop boundaries
-if ~isempty(chopSel),
-    chopEvents = select(chopSel, get_event(data));
-    if ~isempty(chopEvents),
-        evSample = get(chopEvents, 'Sample');
-        evDur    = get(chopEvents, 'Duration');
-    end
-else
-    evDur = 300000;
-    evSample = 1:evDur:size(data,2);
-    if isa(filtObj,'filter.fir_ic') && evSample(end) + 5*delay > (size(data,2) + 1)
-        evSample(end) = [];
-    end
-    evDur=repmat(evDur,numel(evSample));
-    epochDurRep = Inf;
-end
+chunkDur = obj.MaxChunkSamples;
+chunkSample = 1:chunkDur:size(data,2);
+
 
 tinit = tic;
 if verbose,
@@ -63,42 +56,46 @@ end
 if do_reporting(obj)
     
     if nbChannelsRep > 0,
-        channelSel = ceil(linspace(1, size(data,1), nbChannelsRep));
+        channelSel = ceil(linspace(1, size(data,1), nbChannelsRep+1));
         channelSel = unique(channelSel);
+        channelSel = channelSel(1:end-1);
     else
         channelSel = [];
     end
+    
+    iterSel = linspace(1, numel(chunkSample), 5);
+    iterSel = unique([floor(iterSel) ceil(iterSel)]);
     
     rep = get_report(obj);
     print_title(rep, 'Data processing report', get_level(rep) + 1);
 end
 
 %% Filter each segment separately
-for segItr = 1:numel(evSample)
+for segItr = 1:numel(chunkSample)
     
-    if verbose && numel(evSample) > 1,
+    if verbose && numel(chunkSample) > 1,
         
         fprintf( [verboseLabel ...
             '%s filtering for epoch %d/%d...\n\n'], ...
-            get_name(filtObj), segItr, numel(evSample));
+            get_name(filtObj), segItr, numel(chunkSample));
         origVerboseLabel = globals.get.VerboseLabel;
         globals.set('VerboseLabel', ['\t' origVerboseLabel]);
         
     end
     
-    first = evSample(segItr);
-    last  = min(evSample(segItr)+evDur(segItr)-1, size(data,2));
+    first = chunkSample(segItr);
+    last  = min(chunkSample(segItr)+chunkDur-1, size(data,2));
 
     %filtObj = set_verbose(filtObj, false);
     
-    if do_reporting(obj)
+    if do_reporting(obj) && ismember(segItr, iterSel)
         thisRep = childof(report.generic.generic, rep);
         % Set the title of this (sub-)report
-        if numel(evSample) > 1,
+        if numel(chunkSample) > 1,
             % Multiple chops
             title  =  sprintf('Window %d/%d: %4.1f-%4.1f secs', ...
                 segItr, ...
-                numel(evSample), ...
+                numel(chunkSample), ...
                 get_sampling_time(data, first), ... % Time of first sample
                 get_sampling_time(data, last)...    % Time of last sample
                 );
@@ -135,7 +132,7 @@ for segItr = 1:numel(evSample)
             size(pcs,1), pcsStr, class(filtObj));
     end
     
-    if isa(filtObj,'filter.fir_ic') && isempty(chopSel)
+    if isa(filtObj,'filter.fir_ic')
         [pcs, z] = filtfilt(filtObj, pcs, z);
         
         % Delay correction
@@ -146,7 +143,7 @@ for segItr = 1:numel(evSample)
             first_d = first - delay;
         end
         
-        if segItr == numel(evSample)
+        if segItr == numel(chunkSample)
             last_d = last;
             pcs = [pcs z(1:delay,:)'];
         else
@@ -165,7 +162,7 @@ for segItr = 1:numel(evSample)
         pcs = bproj(pca, pcs);
     end
     
-    if do_reporting(obj),
+    if do_reporting(obj) && ismember(segItr, iterSel)
         if verbose,
             fprintf([verboseLabel 'Generating report for %d channels ...'], ...
                 numel(channelSel));
@@ -178,15 +175,18 @@ for segItr = 1:numel(evSample)
             select(data, i);
             
             % Select a subset of data for the report
-            sr = data.SamplingRate;
-            epochDur = floor(epochDurRep*sr);
-            if epochDur >= size(data,2),
-                firstRepSampl = 1;
-                lastRepSampl  = size(data,2);
-            else
-                firstRepSampl = randi(evDur(segItr)-epochDur);
-                lastRepSampl  = firstRepSampl + epochDur - 1;
-            end
+%             sr = data.SamplingRate;
+%             epochDur = floor(epochDurRep*sr);
+%             if epochDur >= evDur(segItr),
+%                 firstRepSampl = 1;
+%                 lastRepSampl  = evDur(segItr);
+%             else
+%                 firstRepSampl = randi(evDur(segItr)-epochDur);
+%                 lastRepSampl  = firstRepSampl + epochDur - 1;
+%             end
+            
+            firstRepSampl = 1;
+            lastRepSampl  = size(data,2);
             
             % Get the begin/end time for the reported epoch
             samplTime = get_sampling_time(data, [firstRepSampl lastRepSampl]);
@@ -222,22 +222,22 @@ for segItr = 1:numel(evSample)
     
     if verbose, fprintf('\n\n'); end
     
-    if do_reporting(obj)
+    if do_reporting(obj) && ismember(segItr, iterSel)
         for i = 1:numel(galleryArray),
             fprintf(thisRep, galleryArray{i});
         end
     end
     
-    if verbose && numel(evSample) > 1,
+    if verbose && numel(chunkSample) > 1,
         clear +misc/eta.m;
         verboseLabel = origVerboseLabel;
         globals.set('VerboseLabel', verboseLabel);
         
         fprintf( [verboseLabel, ...
             'done %s filtering epoch %d/%d...'], get_name(filtObj), ...
-            segItr, numel(evSample));
+            segItr, numel(chunkSample));
         
-        eta(tinit, numel(evSample), segItr, 'remaintime', true);
+        eta(tinit, numel(chunkSample), segItr, 'remaintime', true);
         fprintf('\n\n');
     end
     
