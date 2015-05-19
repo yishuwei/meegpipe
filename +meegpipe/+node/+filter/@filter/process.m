@@ -156,7 +156,7 @@ for segItr = 1:numel(evSample)
             end
             
             % Get the begin/end time for the reported epoch
-            samplTime = get_sampling_time(data, firstRepSampl:lastRepSampl);
+            samplTime = get_sampling_time(data, [firstRepSampl lastRepSampl]);
             select(data, [], firstRepSampl:lastRepSampl);
             select(pcs, [], firstRepSampl:lastRepSampl);
             attach_figure(obj);

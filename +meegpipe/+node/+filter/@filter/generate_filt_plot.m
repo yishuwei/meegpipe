@@ -1,4 +1,4 @@
-function galArray = generate_filt_plot(rep, idx, data1, data2, samplTime, galArray, showDiff)
+function galArray = generate_filt_plot(rep, idx, data1, data2, xTime, galArray, showDiff)
 
 
 import meegpipe.node.globals;
@@ -25,6 +25,17 @@ else
     visibleStr = 'off';
 end
 
+if isa(data1,'physioset.physioset')
+    time_begin = get_sampling_time(data1, 1);
+    time_end = get_sampling_time(data1, size(data1,2));
+elseif isa(data2,'physioset.physioset')
+    time_begin = get_sampling_time(data1, 1);
+    time_end = get_sampling_time(data1, size(data1,2));
+else
+    time_begin = xTime(1);
+    time_end = xTime(2);
+end
+
 % IMPORTANT: The current statble version of Inkscape (0.48.2) crashes when
 % attempting to convert very large .svg files to .png. The downsampling
 % here is to prevent the inkscape crash, but anyways it's a good idea to
@@ -35,12 +46,13 @@ data2 = resample(data2(:,:), 1, Q);
 % Realize that only the first and last sampling instants in samplTime 
 % below are guaranteed to be correct. The reason is that sampling instants
 % do not need to be contiguous (e.g. due to data selections). 
-samplTime = linspace(samplTime(1), samplTime(2), size(data1,2));
+samplTime = linspace(time_begin, time_end, size(data1,2));
 
 figure('Visible', visibleStr);
 plot(samplTime, data1, 'k', 'LineWidth', LINE_WIDTH);
 hold on;
 plot(samplTime, data2, 'r', 'LineWidth', 0.75*LINE_WIDTH);
+xlim(xTime);
 xlabel('Time from beginning of recording (s)');
 ylabel(['Channel ' num2str(idx)]);
 
@@ -69,6 +81,7 @@ if showDiff,
     plot(samplTime, data1, 'k', 'LineWidth', LINE_WIDTH);
     hold on;
     plot(samplTime, data1-data2, 'r', 'LineWidth', 0.75*LINE_WIDTH);
+    xlim(xTime);
     xlabel('Time from beginning of recording (s)');
     ylabel(['Channel ' num2str(idx)]);
     

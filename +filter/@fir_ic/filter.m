@@ -56,7 +56,7 @@ if verbose
     clear +misc/eta;
 end
 
-if isa(x,class(y))
+if isa(y,class(x))
     x = y;
 else
     x(:,:) = y;

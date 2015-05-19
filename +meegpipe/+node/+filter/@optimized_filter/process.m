@@ -45,7 +45,7 @@ end
 %% Find chop boundaries
 chunkDur = obj.MaxChunkSamples;
 chunkSample = 1:chunkDur:size(data,2);
-
+nItr = numel(chunkSample);
 
 tinit = tic;
 if verbose,
@@ -62,7 +62,7 @@ if do_reporting(obj)
         channelSel = [];
     end
     
-    iterSel = linspace(1, numel(chunkSample), 5);
+    iterSel = linspace(1, nItr, 5);
     iterSel = unique([floor(iterSel) ceil(iterSel)]);
     
     rep = get_report(obj);
@@ -70,13 +70,13 @@ if do_reporting(obj)
 end
 
 %% Filter each segment separately
-for segItr = 1:numel(chunkSample)
+for segItr = 1:nItr
     
-    if verbose && numel(chunkSample) > 1,
+    if verbose && nItr > 1,
         
         fprintf( [verboseLabel ...
             '%s filtering for epoch %d/%d...\n\n'], ...
-            get_name(filtObj), segItr, numel(chunkSample));
+            get_name(filtObj), segItr, nItr);
         origVerboseLabel = globals.get.VerboseLabel;
         globals.set('VerboseLabel', ['\t' origVerboseLabel]);
         
@@ -90,11 +90,11 @@ for segItr = 1:numel(chunkSample)
     if do_reporting(obj) && ismember(segItr, iterSel)
         thisRep = childof(report.generic.generic, rep);
         % Set the title of this (sub-)report
-        if numel(chunkSample) > 1,
+        if nItr > 1,
             % Multiple chops
             title  =  sprintf('Window %d/%d: %4.1f-%4.1f secs', ...
                 segItr, ...
-                numel(chunkSample), ...
+                nItr, ...
                 get_sampling_time(data, first), ... % Time of first sample
                 get_sampling_time(data, last)...    % Time of last sample
                 );
@@ -142,7 +142,7 @@ for segItr = 1:numel(chunkSample)
             first_d = first - delay;
         end
         
-        if segItr == numel(chunkSample)
+        if segItr == nItr
             last_d = last;
             pcs = [pcs z(1:delay,:)'];
         else
@@ -183,23 +183,20 @@ for segItr = 1:numel(chunkSample)
 %                 firstRepSampl = randi(evDur(segItr)-epochDur);
 %                 lastRepSampl  = firstRepSampl + epochDur - 1;
 %             end
-            
-            firstRepSampl = 1;
-            lastRepSampl  = size(data,2);
-            
+                        
             % Get the begin/end time for the reported epoch
-            samplTime = get_sampling_time(data, [firstRepSampl lastRepSampl]);
-            select(data, [], firstRepSampl:lastRepSampl);
+            samplTime = get_sampling_time(data,1) + [0 chunkDur/data.SamplingRate];
+%             select(data, [], firstRepSampl:lastRepSampl);
             attach_figure(obj);
             galleryArray = filter.generate_filt_plot(thisRep, ...
                 i, ...
                 data, ...
-                pcs(i, firstRepSampl:lastRepSampl), ...
+                pcs(i,:), ...
                 samplTime, ...
                 galleryArray, ...
                 showDiffRep ...
                 );
-            restore_selection(data); % plotted epoch time range
+%             restore_selection(data); % plotted epoch time range
             
             restore_selection(data);  % data channel
             
@@ -227,16 +224,16 @@ for segItr = 1:numel(chunkSample)
         end
     end
     
-    if verbose && numel(chunkSample) > 1,
+    if verbose && nItr > 1,
         clear +misc/eta.m;
         verboseLabel = origVerboseLabel;
         globals.set('VerboseLabel', verboseLabel);
         
         fprintf( [verboseLabel, ...
             'done %s filtering epoch %d/%d...'], get_name(filtObj), ...
-            segItr, numel(chunkSample));
+            segItr, nItr);
         
-        eta(tinit, numel(chunkSample), segItr, 'remaintime', true);
+        eta(tinit, nItr, segItr, 'remaintime', true);
         fprintf('\n\n');
     end
     
