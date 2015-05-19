@@ -2,7 +2,7 @@ function [x, z] = filter(obj, x, varargin)
 
 import misc.eta;
 
-verbose         = is_verbose(obj) && size(x,1) > 10;
+verbose         = is_verbose(obj);
 verboseLabel 	= get_verbose_label(obj);
 
 

@@ -29,8 +29,9 @@ classdef optimized_filter < meegpipe.node.filter.filter
             varargin = prepend_varargin(varargin, 'DataSelector', dataSel);       
             obj = obj@meegpipe.node.filter.filter(varargin{:});
             
-            if nargin > 0 && ~ischar(varargin{1}),
+            if nargin > 0 && isa(varargin{1},'meegpipe.node.filter.optimized_filter'),
                 % copy construction: keep everything like it is
+                obj.MaxChunkSamples = varargin{1}.MaxChunkSamples;
                 return;
             end
             

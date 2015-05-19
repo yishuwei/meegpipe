@@ -57,8 +57,7 @@ if do_reporting(obj)
     
     if nbChannelsRep > 0,
         channelSel = ceil(linspace(1, size(data,1), nbChannelsRep+1));
-        channelSel = unique(channelSel);
-        channelSel = channelSel(1:end-1);
+        channelSel = unique(channelSel(1:end-1));
     else
         channelSel = [];
     end
