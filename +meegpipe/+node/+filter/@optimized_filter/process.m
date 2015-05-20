@@ -133,6 +133,7 @@ for segItr = 1:nItr
     
     if isa(filtObj,'filter.fir_ic')
         [pcs, z] = filtfilt(filtObj, pcs, z);
+        restore_selection(data);
         
         % Delay correction
         if segItr == 1
@@ -144,14 +145,13 @@ for segItr = 1:nItr
         
         if segItr == nItr
             last_d = last;
-            pcs = [pcs z(1:delay,:)'];
+            mirrorlast = fliplr(data(:,(end-delay+1):end));
+            pcs = [pcs filtfilt(filtObj, mirrorlast, z)];
         else
             last_d = last - delay;
         end
 
-        restore_selection(data);
         select(data, 1:size(data,1), first_d:last_d);
-        
     else
         pcs = filtfilt(filtObj, pcs);
     end
