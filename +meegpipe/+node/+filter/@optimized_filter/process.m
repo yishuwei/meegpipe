@@ -166,12 +166,12 @@ for segItr = 1:nItr
             fprintf([verboseLabel 'Generating report for %d channels ...'], ...
                 numel(channelSel));
         end
-        tinit2 = tic;
-        chanCount = 0;
+%         tinit2 = tic;
+%         chanCount = 0;
         galleryArray = {};
-        for i = channelSel
+%         for i = channelSel
             
-            select(data, i);
+            select(data, channelSel);
             
             % Select a subset of data for the report
 %             sr = data.SamplingRate;
@@ -185,13 +185,13 @@ for segItr = 1:nItr
 %             end
                         
             % Get the begin/end time for the reported epoch
-            samplTime = get_sampling_time(data,1) + [0 chunkDur/data.SamplingRate];
+            samplTime = get_sampling_time(data,1) + [0 (chunkDur-1)/data.SamplingRate];
 %             select(data, [], firstRepSampl:lastRepSampl);
             attach_figure(obj);
             galleryArray = filter.generate_filt_plot(thisRep, ...
-                i, ...
+                channelSel, ...
                 data, ...
-                pcs(i,:), ...
+                pcs(channelSel,:), ...
                 samplTime, ...
                 galleryArray, ...
                 showDiffRep ...
@@ -200,12 +200,12 @@ for segItr = 1:nItr
             
             restore_selection(data);  % data channel
             
-            chanCount = chanCount + 1;
-            if verbose,
-                eta(tinit2, numel(channelSel), chanCount, 'remaintime', true);
-            end
+%             chanCount = chanCount + 1;
+%             if verbose,
+%                 eta(tinit2, numel(channelSel), chanCount, 'remaintime', true);
+%             end
             
-        end
+%         end
     end
     
     if retRes,

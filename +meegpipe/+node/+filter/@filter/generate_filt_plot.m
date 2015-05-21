@@ -1,4 +1,4 @@
-function galArray = generate_filt_plot(rep, idx, data1, data2, xTime, galArray, showDiff)
+function galArray = generate_filt_plot(rep, channelIdx, data1, data2, xTime, galArray, showDiff)
 
 
 import meegpipe.node.globals;
@@ -16,6 +16,13 @@ if isempty(galArray),
     gal = clone(globals.get.Gallery);
     gal = set_title(gal, 'Filter input vs filter output');
     galArray = {gal};
+end
+if showDiff && numel(galArray) < 2,
+    % An additional gallery showing the filter input vs the different
+    % input and output
+    gal = clone(globals.get.Gallery);
+    gal = set_title(gal, 'Filter input vs difference input-output');
+    galArray = [galArray {gal}];
 end
 
 visible = globals.get.VisibleFigures;
@@ -41,17 +48,20 @@ end
 % here is to prevent the inkscape crash, but anyways it's a good idea to
 % downsample for making the svg to png conversion faster.
 Q = ceil(size(data1,2)/MAX_LENGTH);
-data1 = resample(data1(:,:), 1, Q);
-data2 = resample(data2(:,:), 1, Q);
+data1 = resample(data1(:,:)', 1, Q);
+data2 = resample(data2(:,:)', 1, Q);
 % Realize that only the first and last sampling instants in samplTime 
 % below are guaranteed to be correct. The reason is that sampling instants
 % do not need to be contiguous (e.g. due to data selections). 
-samplTime = linspace(time_begin, time_end, size(data1,2));
+samplTime = linspace(time_begin, time_end, size(data1,1));
+
+for i=1:numel(channelIdx)
+idx = channelIdx(i);
 
 figure('Visible', visibleStr);
-plot(samplTime, data1, 'k', 'LineWidth', LINE_WIDTH);
+plot(samplTime, data1(:,i), 'k', 'LineWidth', LINE_WIDTH);
 hold on;
-plot(samplTime, data2, 'r', 'LineWidth', 0.75*LINE_WIDTH);
+plot(samplTime, data2(:,i), 'r', 'LineWidth', 0.75*LINE_WIDTH);
 xlim(xTime);
 xlabel('Time from beginning of recording (s)');
 ylabel(['Channel ' num2str(idx)]);
@@ -69,18 +79,11 @@ caption = ['Filter input (black) vs output (red) for channel ' num2str(idx)];
 galArray{1} = add_figure(galArray{1}, fileName, caption);
 
 if showDiff,
-    % An additional gallery showing the filter input vs the different
-    % input and output
-    if numel(galArray) < 2,
-        gal = clone(globals.get.Gallery);
-        gal = set_title(gal, 'Filter input vs difference input-output');
-        galArray = [galArray {gal}];
-    end
     
     figure('Visible', visibleStr);
-    plot(samplTime, data1, 'k', 'LineWidth', LINE_WIDTH);
+    plot(samplTime, data1(:,i), 'k', 'LineWidth', LINE_WIDTH);
     hold on;
-    plot(samplTime, data1-data2, 'r', 'LineWidth', 0.75*LINE_WIDTH);
+    plot(samplTime, data1(:,i)-data2(:,i), 'r', 'LineWidth', 0.75*LINE_WIDTH);
     xlim(xTime);
     xlabel('Time from beginning of recording (s)');
     ylabel(['Channel ' num2str(idx)]);
@@ -100,5 +103,5 @@ if showDiff,
    
 end
 
-
+end
 end
