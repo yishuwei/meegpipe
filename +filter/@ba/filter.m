@@ -24,16 +24,17 @@ end
 
 for i = 1:size(x,1),
    
-    thisX = [fliplr(x(i, 1:(2*delay))) x(i,:)];
+    thisX = [fliplr(x(i, 1:(2*delay))) x(i,:) fliplr(x(i, (end-delay+1):end))];
     
     
     y = filter(obj.B, obj.A, thisX);
-    if numel(obj.A) > 1,
-        x(i,:) = y(2*delay+1:end);
-    else    
-        x(i, 1:end-delay) = y((3*delay+1):end);
-        x(i, end-delay+1:end) = fliplr(x(i, (end-2*delay+1):(end-delay)));
-    end
+    x(i,:) = y((3*delay+1):end);
+%     if numel(obj.A) > 1,
+%         x(i,:) = y(2*delay+1:end);
+%     else    
+%         x(i, 1:end-delay) = y((3*delay+1):end);
+%         x(i, end-delay+1:end) = fliplr(x(i, (end-2*delay+1):(end-delay)));
+%     end
     
     if verbose,
         eta(tinit, size(x,1), i, 'remaintime', false);

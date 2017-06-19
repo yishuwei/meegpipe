@@ -345,6 +345,7 @@ try
     clear +io/+mff2/read_data; % Clear persistent block counter
     
 catch ME
+    getReport(ME)
     fclose(fid);
     if ~isempty(fidBins),
         for i = 1:numel(fidBins),
