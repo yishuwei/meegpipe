@@ -12,8 +12,12 @@ if isempty(obj),
         'Cannot assign to an empty pset object.');
 end
 
-if isempty(obj.MemoryMap) && strcmp(s(1).type, '()'),
-    make_mmemmapfile(obj);    
+if strcmpi(s(1).type, '()')
+    
+    if isempty(obj.MemoryMap) || any(cellfun(@(x) isempty(x), obj.MemoryMap)) ,
+        make_mmemmapfile(obj);
+    end
+    
 end
 
 switch s(1).type
