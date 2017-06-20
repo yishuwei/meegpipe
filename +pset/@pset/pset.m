@@ -427,10 +427,13 @@ classdef pset < pset.mmappset & ...
             for i = 1:length(obj.MemoryMap)
                 obj.NbPoints = obj.NbPoints + ...
                     size(obj.MemoryMap{i}.Data.Data,2);
+                if obj.AutoDestroyMemMap,
+                    destroy_mmemmapfile(obj,i);
+                end
             end
             
             % Number of points in each memory chunk
-            chunkSize = pset.globals.get.MemoryMapSize;
+            chunkSize = meegpipe.get_config('pset', 'largest_memory_chunk');
             nPointsChunk = floor(chunkSize/(sizeof(obj.Precision)*nDims));
             obj.ChunkIndices = 1:nPointsChunk:nPoints;
             if obj.ChunkIndices(end) == nPoints && numel(obj.ChunkIndices)>1,
