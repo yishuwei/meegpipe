@@ -1,3 +1,8 @@
+NB. This branch contains utilities and configurations optimized for the current 
+cluster computing environment at the Netherlands Institute for Neuroscience. Some 
+updates of upstream are not incorporated, deliberately so since they haven't been 
+thoroughly tested.
+
 meegpipe
 ========
 
